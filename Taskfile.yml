@@ -13,11 +13,9 @@ tasks:
     desc: "Build OpenAPI docs"
     silent: true
     cmds:
-      - task: build
-      - npx @redocly/cli build-docs ./openapi.yaml -o ./docs/web.html
+      - npx @redocly/cli build-docs ./openapi.yaml -o ./docs/openapi/index.html
   preview:
     desc: "Preview OpenAPI docs"
     silent: true
     cmds:
-      - task: build
       - npx @redocly/cli preview-docs ./openapi.yaml
