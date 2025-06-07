@@ -7,16 +7,18 @@ info:
   version: 1.0.0
   contact:
     name: PKI Certificate Management Team
-    email: support@pki-cert-mgmt.example.com
+    email: pki@kantacky.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://api.pki-cert-mgmt.example.com/v1
+  - url: https://api.pki.kantacky.com/v1
     description: 本番環境
-  - url: https://staging-api.pki-cert-mgmt.example.com/v1
+  - url: https://stg.api.pki.kantacky.com/v1
     description: ステージング環境
+  - url: https://dev.api.pki.kantacky.com/v1
+    description: 開発環境
   - url: http://localhost:8080/v1
     description: ローカル開発環境
 
@@ -33,7 +35,7 @@ paths:
         - System
       security: []
       responses:
-        '200':
+        "200":
           description: システムが正常に動作中
           content:
             application/json:
@@ -115,25 +117,25 @@ paths:
             enum: [asc, desc]
             default: desc
       responses:
-        '200':
+        "200":
           description: 証明書一覧
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginationResponse'
+                  - $ref: "#/components/schemas/PaginationResponse"
                   - type: object
                     properties:
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Certificate'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                          $ref: "#/components/schemas/Certificate"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       summary: 証明書発行
@@ -145,22 +147,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CertificateRequest'
+              $ref: "#/components/schemas/CertificateRequest"
       responses:
-        '201':
+        "201":
           description: 証明書が正常に発行されました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Certificate'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Certificate"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /certificates/{id}:
     get:
@@ -177,18 +179,18 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: 証明書詳細
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Certificate'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Certificate"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     put:
       summary: 証明書更新
@@ -208,24 +210,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CertificateRequest'
+              $ref: "#/components/schemas/CertificateRequest"
       responses:
-        '200':
+        "200":
           description: 証明書が正常に更新されました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Certificate'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Certificate"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     delete:
       summary: 証明書失効
@@ -265,22 +267,22 @@ paths:
                   format: date-time
                   description: 失効日時（指定しない場合は現在時刻）
       responses:
-        '200':
+        "200":
           description: 証明書が正常に失効されました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Certificate'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Certificate"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /ca/root:
     get:
@@ -289,18 +291,18 @@ paths:
       tags:
         - Certificate Authority
       responses:
-        '200':
+        "200":
           description: ルートCA証明書
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CertificateAuthority'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/CertificateAuthority"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       summary: ルートCA証明書作成
@@ -351,20 +353,20 @@ paths:
                   format: uri
                   description: OCSPレスポンダーURL
       responses:
-        '201':
+        "201":
           description: ルートCA証明書が正常に作成されました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CertificateAuthority'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/CertificateAuthority"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /ca/intermediate:
     get:
@@ -401,25 +403,25 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: 中間CA証明書一覧
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginationResponse'
+                  - $ref: "#/components/schemas/PaginationResponse"
                   - type: object
                     properties:
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/CertificateAuthority'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                          $ref: "#/components/schemas/CertificateAuthority"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       summary: 中間CA証明書作成
@@ -475,20 +477,20 @@ paths:
                   format: uri
                   description: OCSPレスポンダーURL
       responses:
-        '201':
+        "201":
           description: 中間CA証明書が正常に作成されました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CertificateAuthority'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/CertificateAuthority"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /ca/hierarchy:
     get:
@@ -497,7 +499,7 @@ paths:
       tags:
         - Certificate Authority
       responses:
-        '200':
+        "200":
           description: CA階層構造
           content:
             application/json:
@@ -505,22 +507,22 @@ paths:
                 type: object
                 properties:
                   root:
-                    $ref: '#/components/schemas/CertificateAuthority'
+                    $ref: "#/components/schemas/CertificateAuthority"
                   intermediates:
                     type: array
                     items:
                       allOf:
-                        - $ref: '#/components/schemas/CertificateAuthority'
+                        - $ref: "#/components/schemas/CertificateAuthority"
                         - type: object
                           properties:
                             children:
                               type: array
                               items:
-                                $ref: '#/components/schemas/CertificateAuthority'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                                $ref: "#/components/schemas/CertificateAuthority"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /ca/crl:
     get:
@@ -544,7 +546,7 @@ paths:
             enum: [pem, der]
             default: pem
       responses:
-        '200':
+        "200":
           description: CRL
           content:
             application/x-pem-file:
@@ -556,14 +558,14 @@ paths:
                 type: string
                 format: binary
                 description: DER形式のCRL
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /ca/{id}:
     get:
@@ -580,18 +582,18 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: CA証明書詳細
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CertificateAuthority'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/CertificateAuthority"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     delete:
       summary: CA証明書失効
@@ -629,22 +631,22 @@ paths:
                   format: date-time
                   description: 失効日時（指定しない場合は現在時刻）
       responses:
-        '200':
+        "200":
           description: CA証明書が正常に失効されました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CertificateAuthority'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/CertificateAuthority"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /certificates/{id}/validate:
     post:
@@ -680,7 +682,7 @@ paths:
                   format: date-time
                   description: 検証時点（指定しない場合は現在時刻）
       responses:
-        '200':
+        "200":
           description: 証明書検証結果
           content:
             application/json:
@@ -719,14 +721,14 @@ paths:
                     type: string
                     format: date-time
                     description: 検証実行日時
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /certificates/validate-chain:
     post:
@@ -763,7 +765,7 @@ paths:
                   format: date-time
                   description: 検証時点（指定しない場合は現在時刻）
       responses:
-        '200':
+        "200":
           description: 証明書チェーン検証結果
           content:
             application/json:
@@ -801,12 +803,12 @@ paths:
                     type: string
                     format: date-time
                     description: 検証実行日時
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /ocsp/{serialNumber}:
     get:
@@ -828,7 +830,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: OCSPレスポンス
           content:
             application/ocsp-response:
@@ -836,14 +838,14 @@ paths:
                 type: string
                 format: binary
                 description: OCSPレスポンス（DER形式）
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /certificates/{id}/status:
     get:
@@ -860,7 +862,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: 証明書失効状態
           content:
             application/json:
@@ -898,12 +900,12 @@ paths:
                     type: string
                     format: date-time
                     description: 次回更新予定日時
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /keys:
     get:
@@ -945,25 +947,25 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: キー一覧
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginationResponse'
+                  - $ref: "#/components/schemas/PaginationResponse"
                   - type: object
                     properties:
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Key'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                          $ref: "#/components/schemas/Key"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       summary: キー生成
@@ -1003,20 +1005,20 @@ paths:
                   description: キーがエクスポート可能かどうか
                   default: false
       responses:
-        '201':
+        "201":
           description: キーが正常に生成されました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Key'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Key"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /keys/{id}:
     get:
@@ -1039,26 +1041,26 @@ paths:
             type: boolean
             default: false
       responses:
-        '200':
+        "200":
           description: キー詳細
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/Key'
+                  - $ref: "#/components/schemas/Key"
                   - type: object
                     properties:
                       privateKey:
                         type: string
                         description: 秘密鍵（PEM形式、includePrivate=trueの場合のみ）
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     put:
       summary: キー更新
@@ -1085,22 +1087,22 @@ paths:
                   enum: [active, compromised, retired]
                   description: キーの状態
       responses:
-        '200':
+        "200":
           description: キーが正常に更新されました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Key'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Key"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     delete:
       summary: キー削除
@@ -1116,16 +1118,16 @@ paths:
             type: string
             format: uuid
       responses:
-        '204':
+        "204":
           description: キーが正常に削除されました
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /keys/{id}/backup:
     post:
@@ -1162,7 +1164,7 @@ paths:
                   description: 証明書チェーンを含むかどうか
                   default: false
       responses:
-        '200':
+        "200":
           description: キーバックアップ
           content:
             application/x-pem-file:
@@ -1174,16 +1176,16 @@ paths:
                 type: string
                 format: binary
                 description: PKCS#12形式のキーバックアップ
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /keys/{id}/restore:
     post:
@@ -1220,22 +1222,22 @@ paths:
                   enum: [pem, pkcs12]
                   description: バックアップ形式
       responses:
-        '200':
+        "200":
           description: キーが正常にリストアされました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Key'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Key"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /keys/{id}/rotate:
     post:
@@ -1270,7 +1272,7 @@ paths:
                   format: date-time
                   description: 古いキーの退役日時（指定しない場合は即座に退役）
       responses:
-        '200':
+        "200":
           description: キーローテーションが正常に完了しました
           content:
             application/json:
@@ -1278,23 +1280,23 @@ paths:
                 type: object
                 properties:
                   newKey:
-                    $ref: '#/components/schemas/Key'
+                    $ref: "#/components/schemas/Key"
                   oldKey:
-                    $ref: '#/components/schemas/Key'
+                    $ref: "#/components/schemas/Key"
                   rotationDate:
                     type: string
                     format: date-time
                     description: ローテーション実行日時
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /templates:
     get:
@@ -1322,23 +1324,23 @@ paths:
           schema:
             type: boolean
       responses:
-        '200':
+        "200":
           description: テンプレート一覧
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginationResponse'
+                  - $ref: "#/components/schemas/PaginationResponse"
                   - type: object
                     properties:
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Template'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                          $ref: "#/components/schemas/Template"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       summary: 証明書テンプレート作成
@@ -1365,7 +1367,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: 
+                    enum:
                       - digitalSignature
                       - nonRepudiation
                       - keyEncipherment
@@ -1394,20 +1396,20 @@ paths:
                   enum: [2048, 3072, 4096]
                   default: 2048
       responses:
-        '201':
+        "201":
           description: テンプレートが正常に作成されました
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Template'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Template"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /auth/login:
     post:
@@ -1434,7 +1436,7 @@ paths:
                   description: パスワード
                   format: password
       responses:
-        '200':
+        "200":
           description: 認証成功
           content:
             application/json:
@@ -1455,10 +1457,10 @@ paths:
                     items:
                       type: string
                     description: 許可されたスコープ
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /audit/logs:
     get:
@@ -1501,13 +1503,13 @@ paths:
             type: string
             enum: [certificate, ca, key, template, user]
       responses:
-        '200':
+        "200":
           description: 監査ログ一覧
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginationResponse'
+                  - $ref: "#/components/schemas/PaginationResponse"
                   - type: object
                     properties:
                       data:
@@ -1538,12 +1540,12 @@ paths:
                               type: boolean
                             details:
                               type: object
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /certificates/import:
     post:
@@ -1573,7 +1575,7 @@ paths:
                   type: string
                   description: PKCS#12ファイルのパスワード
       responses:
-        '201':
+        "201":
           description: 証明書が正常にインポートされました
           content:
             application/json:
@@ -1583,7 +1585,7 @@ paths:
                   imported:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Certificate'
+                      $ref: "#/components/schemas/Certificate"
                   failed:
                     type: array
                     items:
@@ -1593,14 +1595,14 @@ paths:
                           type: string
                         details:
                           type: string
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /certificates/export:
     post:
@@ -1636,7 +1638,7 @@ paths:
                   type: string
                   description: PKCS#12形式の場合のパスワード
       responses:
-        '200':
+        "200":
           description: エクスポートファイル
           content:
             application/x-pem-file:
@@ -1648,14 +1650,14 @@ paths:
                 type: string
                 format: binary
                 description: PKCS#12形式のエクスポートファイル
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '403':
-          $ref: '#/components/responses/ForbiddenError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /reports/issuance:
     get:
@@ -1683,7 +1685,7 @@ paths:
             enum: [day, week, month]
             default: day
       responses:
-        '200':
+        "200":
           description: 証明書発行統計
           content:
             application/json:
@@ -1716,12 +1718,12 @@ paths:
                           type: integer
                         expired:
                           type: integer
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /reports/usage:
     get:
@@ -1730,7 +1732,7 @@ paths:
       tags:
         - Reports
       responses:
-        '200':
+        "200":
           description: 使用状況レポート
           content:
             application/json:
@@ -1773,10 +1775,10 @@ paths:
                         type: integer
                       active:
                         type: integer
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 components:
   securitySchemes:
@@ -1785,7 +1787,7 @@ components:
       in: header
       name: X-API-Key
       description: APIキー認証
-    
+
     OAuth2:
       type: oauth2
       description: OAuth2認証
@@ -1803,35 +1805,35 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
-    
+            $ref: "#/components/schemas/Error"
+
     ForbiddenError:
       description: アクセス権限がありません
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
-    
+            $ref: "#/components/schemas/Error"
+
     NotFoundError:
       description: リソースが見つかりません
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
-    
+            $ref: "#/components/schemas/Error"
+
     ValidationError:
       description: 入力値が無効です
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
-    
+            $ref: "#/components/schemas/Error"
+
     InternalServerError:
       description: サーバー内部エラー
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
 
   schemas:
     Error:
@@ -1940,7 +1942,7 @@ components:
           type: array
           items:
             type: string
-            enum: 
+            enum:
               - digitalSignature
               - nonRepudiation
               - keyEncipherment
@@ -2036,7 +2038,7 @@ components:
           type: array
           items:
             type: string
-            enum: 
+            enum:
               - digitalSignature
               - nonRepudiation
               - keyEncipherment
@@ -2176,7 +2178,7 @@ components:
           type: array
           items:
             type: string
-            enum: 
+            enum:
               - digitalSignature
               - nonRepudiation
               - keyEncipherment
