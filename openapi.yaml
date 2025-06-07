@@ -905,6 +905,879 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /keys:
+    get:
+      summary: キー一覧取得
+      description: 暗号化キーの一覧を取得します
+      tags:
+        - Key Management
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: type
+          in: query
+          description: キータイプでフィルタ
+          schema:
+            type: string
+            enum: [RSA, EC]
+        - name: status
+          in: query
+          description: キーの状態でフィルタ
+          schema:
+            type: string
+            enum: [active, compromised, retired]
+        - name: keySize
+          in: query
+          description: キーサイズでフィルタ
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: キー一覧
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Key'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: キー生成
+      description: 新しい暗号化キーペアを生成します
+      tags:
+        - Key Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - size
+              properties:
+                type:
+                  type: string
+                  enum: [RSA, EC]
+                  description: キーアルゴリズム
+                size:
+                  type: integer
+                  description: キーサイズ（ビット）
+                  example: 2048
+                curve:
+                  type: string
+                  enum: [P-256, P-384, P-521]
+                  description: 楕円曲線（ECの場合）
+                usage:
+                  type: array
+                  items:
+                    type: string
+                    enum: [signing, encryption, keyAgreement]
+                  description: キーの用途
+                exportable:
+                  type: boolean
+                  description: キーがエクスポート可能かどうか
+                  default: false
+      responses:
+        '201':
+          description: キーが正常に生成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /keys/{id}:
+    get:
+      summary: キー取得
+      description: 指定されたIDのキーを取得します
+      tags:
+        - Key Management
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: キーのID
+          schema:
+            type: string
+            format: uuid
+        - name: includePrivate
+          in: query
+          description: 秘密鍵を含むかどうか（管理者権限が必要）
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: キー詳細
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Key'
+                  - type: object
+                    properties:
+                      privateKey:
+                        type: string
+                        description: 秘密鍵（PEM形式、includePrivate=trueの場合のみ）
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: キー更新
+      description: キーのメタデータを更新します
+      tags:
+        - Key Management
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: キーのID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [active, compromised, retired]
+                  description: キーの状態
+      responses:
+        '200':
+          description: キーが正常に更新されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: キー削除
+      description: キーを削除します（注意：この操作は元に戻せません）
+      tags:
+        - Key Management
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: キーのID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: キーが正常に削除されました
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /keys/{id}/backup:
+    post:
+      summary: キーバックアップ
+      description: キーペアをバックアップします
+      tags:
+        - Key Management
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: キーのID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - format
+              properties:
+                format:
+                  type: string
+                  enum: [pem, pkcs12]
+                  description: バックアップ形式
+                password:
+                  type: string
+                  description: バックアップファイルのパスワード（PKCS#12形式の場合）
+                includeChain:
+                  type: boolean
+                  description: 証明書チェーンを含むかどうか
+                  default: false
+      responses:
+        '200':
+          description: キーバックアップ
+          content:
+            application/x-pem-file:
+              schema:
+                type: string
+                description: PEM形式のキーバックアップ
+            application/x-pkcs12:
+              schema:
+                type: string
+                format: binary
+                description: PKCS#12形式のキーバックアップ
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /keys/{id}/restore:
+    post:
+      summary: キーリストア
+      description: バックアップからキーペアをリストアします
+      tags:
+        - Key Management
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: キーのID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - backup
+              properties:
+                backup:
+                  type: string
+                  format: binary
+                  description: バックアップファイル
+                password:
+                  type: string
+                  description: バックアップファイルのパスワード
+                format:
+                  type: string
+                  enum: [pem, pkcs12]
+                  description: バックアップ形式
+      responses:
+        '200':
+          description: キーが正常にリストアされました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /keys/{id}/rotate:
+    post:
+      summary: キーローテーション
+      description: 新しいキーペアを生成し、古いキーを退役させます
+      tags:
+        - Key Management
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: キーのID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newKeySize:
+                  type: integer
+                  description: 新しいキーのサイズ（指定しない場合は現在と同じ）
+                newCurve:
+                  type: string
+                  enum: [P-256, P-384, P-521]
+                  description: 新しいキーの楕円曲線（ECキーの場合）
+                retirementDate:
+                  type: string
+                  format: date-time
+                  description: 古いキーの退役日時（指定しない場合は即座に退役）
+      responses:
+        '200':
+          description: キーローテーションが正常に完了しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  newKey:
+                    $ref: '#/components/schemas/Key'
+                  oldKey:
+                    $ref: '#/components/schemas/Key'
+                  rotationDate:
+                    type: string
+                    format: date-time
+                    description: ローテーション実行日時
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /templates:
+    get:
+      summary: 証明書テンプレート一覧取得
+      description: 証明書テンプレートの一覧を取得します
+      tags:
+        - Templates
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: isActive
+          in: query
+          description: アクティブなテンプレートのみを取得
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: テンプレート一覧
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Template'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: 証明書テンプレート作成
+      description: 新しい証明書テンプレートを作成します
+      tags:
+        - Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - keyUsage
+              properties:
+                name:
+                  type: string
+                  description: テンプレート名
+                description:
+                  type: string
+                  description: テンプレートの説明
+                keyUsage:
+                  type: array
+                  items:
+                    type: string
+                    enum: 
+                      - digitalSignature
+                      - nonRepudiation
+                      - keyEncipherment
+                      - dataEncipherment
+                      - keyAgreement
+                      - keyCertSign
+                      - cRLSign
+                extendedKeyUsage:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - serverAuth
+                      - clientAuth
+                      - codeSigning
+                      - emailProtection
+                      - timeStamping
+                      - OCSPSigning
+                validityDays:
+                  type: integer
+                  minimum: 1
+                  maximum: 3650
+                  default: 365
+                keySize:
+                  type: integer
+                  enum: [2048, 3072, 4096]
+                  default: 2048
+      responses:
+        '201':
+          description: テンプレートが正常に作成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/login:
+    post:
+      summary: 認証
+      description: APIアクセス用の認証を行います
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  description: ユーザー名
+                password:
+                  type: string
+                  description: パスワード
+                  format: password
+      responses:
+        '200':
+          description: 認証成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    description: アクセストークン
+                  tokenType:
+                    type: string
+                    example: "Bearer"
+                  expiresIn:
+                    type: integer
+                    description: トークンの有効期限（秒）
+                  scope:
+                    type: array
+                    items:
+                      type: string
+                    description: 許可されたスコープ
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /audit/logs:
+    get:
+      summary: 監査ログ取得
+      description: システムの監査ログを取得します
+      tags:
+        - Security
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: [create, read, update, delete, login, logout]
+        - name: resource
+          in: query
+          schema:
+            type: string
+            enum: [certificate, ca, key, template, user]
+      responses:
+        '200':
+          description: 監査ログ一覧
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            timestamp:
+                              type: string
+                              format: date-time
+                            userId:
+                              type: string
+                              format: uuid
+                            action:
+                              type: string
+                            resource:
+                              type: string
+                            resourceId:
+                              type: string
+                            ipAddress:
+                              type: string
+                            userAgent:
+                              type: string
+                            success:
+                              type: boolean
+                            details:
+                              type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certificates/import:
+    post:
+      summary: 証明書インポート
+      description: 証明書をシステムにインポートします
+      tags:
+        - Import/Export
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - format
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: インポートする証明書ファイル
+                format:
+                  type: string
+                  enum: [pem, pkcs12]
+                  description: ファイル形式
+                password:
+                  type: string
+                  description: PKCS#12ファイルのパスワード
+      responses:
+        '201':
+          description: 証明書が正常にインポートされました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imported:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Certificate'
+                  failed:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        error:
+                          type: string
+                        details:
+                          type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certificates/export:
+    post:
+      summary: 証明書エクスポート
+      description: 指定された証明書をエクスポートします
+      tags:
+        - Import/Export
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - certificateIds
+                - format
+              properties:
+                certificateIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: エクスポートする証明書のIDリスト
+                format:
+                  type: string
+                  enum: [pem, pkcs12]
+                  description: エクスポート形式
+                includePrivateKeys:
+                  type: boolean
+                  description: 秘密鍵を含むかどうか
+                  default: false
+                password:
+                  type: string
+                  description: PKCS#12形式の場合のパスワード
+      responses:
+        '200':
+          description: エクスポートファイル
+          content:
+            application/x-pem-file:
+              schema:
+                type: string
+                description: PEM形式のエクスポートファイル
+            application/x-pkcs12:
+              schema:
+                type: string
+                format: binary
+                description: PKCS#12形式のエクスポートファイル
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reports/issuance:
+    get:
+      summary: 証明書発行統計
+      description: 証明書の発行統計情報を取得します
+      tags:
+        - Reports
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: groupBy
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+      responses:
+        '200':
+          description: 証明書発行統計
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: object
+                    properties:
+                      start:
+                        type: string
+                        format: date
+                      end:
+                        type: string
+                        format: date
+                  total:
+                    type: integer
+                    description: 総発行数
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        issued:
+                          type: integer
+                        revoked:
+                          type: integer
+                        expired:
+                          type: integer
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reports/usage:
+    get:
+      summary: 使用状況レポート
+      description: システムの使用状況レポートを取得します
+      tags:
+        - Reports
+      responses:
+        '200':
+          description: 使用状況レポート
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  certificates:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      active:
+                        type: integer
+                      revoked:
+                        type: integer
+                      expired:
+                        type: integer
+                  cas:
+                    type: object
+                    properties:
+                      root:
+                        type: integer
+                      intermediate:
+                        type: integer
+                  keys:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      active:
+                        type: integer
+                      compromised:
+                        type: integer
+                      retired:
+                        type: integer
+                  templates:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      active:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     ApiKeyAuth:
