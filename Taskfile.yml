@@ -1,0 +1,23 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  lint:
+    desc: "Lint OpenAPI file"
+    silent: true
+    cmds:
+      - task: build
+      - npx @redocly/cli lint ./openapi.yaml
+  build:
+    desc: "Build OpenAPI docs"
+    silent: true
+    cmds:
+      - task: build
+      - npx @redocly/cli build-docs ./openapi.yaml -o ./docs/web.html
+  preview:
+    desc: "Preview OpenAPI docs"
+    silent: true
+    cmds:
+      - task: build
+      - npx @redocly/cli preview-docs ./openapi.yaml
