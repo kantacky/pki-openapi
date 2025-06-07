@@ -282,6 +282,629 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /ca/root:
+    get:
+      summary: ルートCA証明書取得
+      description: ルートCA証明書を取得します
+      tags:
+        - Certificate Authority
+      responses:
+        '200':
+          description: ルートCA証明書
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateAuthority'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: ルートCA証明書作成
+      description: 新しいルートCA証明書を作成します
+      tags:
+        - Certificate Authority
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - subject
+                - keySize
+                - validityDays
+              properties:
+                subject:
+                  type: string
+                  description: CA証明書の主体者（Distinguished Name）
+                  example: "CN=Example Root CA,O=Example Corp,C=JP"
+                keySize:
+                  type: integer
+                  enum: [2048, 3072, 4096]
+                  description: 鍵長（ビット）
+                  default: 4096
+                keyType:
+                  type: string
+                  enum: [RSA, EC]
+                  description: 鍵アルゴリズム
+                  default: RSA
+                curve:
+                  type: string
+                  enum: [P-256, P-384, P-521]
+                  description: 楕円曲線（ECの場合）
+                validityDays:
+                  type: integer
+                  minimum: 365
+                  maximum: 10950
+                  description: 有効期間（日数）
+                  default: 7300
+                crlUrl:
+                  type: string
+                  format: uri
+                  description: CRL配布ポイントURL
+                ocspUrl:
+                  type: string
+                  format: uri
+                  description: OCSPレスポンダーURL
+      responses:
+        '201':
+          description: ルートCA証明書が正常に作成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateAuthority'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ca/intermediate:
+    get:
+      summary: 中間CA証明書一覧取得
+      description: 中間CA証明書の一覧を取得します
+      tags:
+        - Certificate Authority
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: CAの状態でフィルタ
+          schema:
+            type: string
+            enum: [active, revoked, expired]
+        - name: parentCaId
+          in: query
+          description: 親CAのIDでフィルタ
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 中間CA証明書一覧
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CertificateAuthority'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: 中間CA証明書作成
+      description: 新しい中間CA証明書を作成します
+      tags:
+        - Certificate Authority
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - subject
+                - parentCaId
+                - keySize
+                - validityDays
+              properties:
+                subject:
+                  type: string
+                  description: CA証明書の主体者（Distinguished Name）
+                  example: "CN=Example Intermediate CA,O=Example Corp,C=JP"
+                parentCaId:
+                  type: string
+                  format: uuid
+                  description: 親CAのID
+                keySize:
+                  type: integer
+                  enum: [2048, 3072, 4096]
+                  description: 鍵長（ビット）
+                  default: 2048
+                keyType:
+                  type: string
+                  enum: [RSA, EC]
+                  description: 鍵アルゴリズム
+                  default: RSA
+                curve:
+                  type: string
+                  enum: [P-256, P-384, P-521]
+                  description: 楕円曲線（ECの場合）
+                validityDays:
+                  type: integer
+                  minimum: 365
+                  maximum: 3650
+                  description: 有効期間（日数）
+                  default: 1825
+                crlUrl:
+                  type: string
+                  format: uri
+                  description: CRL配布ポイントURL
+                ocspUrl:
+                  type: string
+                  format: uri
+                  description: OCSPレスポンダーURL
+      responses:
+        '201':
+          description: 中間CA証明書が正常に作成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateAuthority'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ca/hierarchy:
+    get:
+      summary: CA階層取得
+      description: CA証明書の階層構造を取得します
+      tags:
+        - Certificate Authority
+      responses:
+        '200':
+          description: CA階層構造
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  root:
+                    $ref: '#/components/schemas/CertificateAuthority'
+                  intermediates:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/CertificateAuthority'
+                        - type: object
+                          properties:
+                            children:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/CertificateAuthority'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ca/crl:
+    get:
+      summary: CRL（証明書失効リスト）取得
+      description: 指定されたCAのCRLを取得します
+      tags:
+        - Certificate Authority
+      parameters:
+        - name: caId
+          in: query
+          required: true
+          description: CAのID
+          schema:
+            type: string
+            format: uuid
+        - name: format
+          in: query
+          description: CRLの形式
+          schema:
+            type: string
+            enum: [pem, der]
+            default: pem
+      responses:
+        '200':
+          description: CRL
+          content:
+            application/x-pem-file:
+              schema:
+                type: string
+                description: PEM形式のCRL
+            application/x-x509-crl:
+              schema:
+                type: string
+                format: binary
+                description: DER形式のCRL
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ca/{id}:
+    get:
+      summary: CA証明書取得
+      description: 指定されたIDのCA証明書を取得します
+      tags:
+        - Certificate Authority
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: CAのID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: CA証明書詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateAuthority'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: CA証明書失効
+      description: CA証明書を失効させます
+      tags:
+        - Certificate Authority
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: CAのID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  enum:
+                    - unspecified
+                    - keyCompromise
+                    - cACompromise
+                    - superseded
+                    - cessationOfOperation
+                  description: 失効理由
+                revocationDate:
+                  type: string
+                  format: date-time
+                  description: 失効日時（指定しない場合は現在時刻）
+      responses:
+        '200':
+          description: CA証明書が正常に失効されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateAuthority'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certificates/{id}/validate:
+    post:
+      summary: 証明書検証
+      description: 指定された証明書の有効性を確認します
+      tags:
+        - Certificate Validation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 証明書のID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                checkRevocation:
+                  type: boolean
+                  description: 失効状態の確認を行うかどうか
+                  default: true
+                checkExpiry:
+                  type: boolean
+                  description: 有効期限の確認を行うかどうか
+                  default: true
+                validationTime:
+                  type: string
+                  format: date-time
+                  description: 検証時点（指定しない場合は現在時刻）
+      responses:
+        '200':
+          description: 証明書検証結果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    description: 証明書が有効かどうか
+                  validationResults:
+                    type: object
+                    properties:
+                      signatureValid:
+                        type: boolean
+                        description: 署名が有効かどうか
+                      notExpired:
+                        type: boolean
+                        description: 有効期限内かどうか
+                      notRevoked:
+                        type: boolean
+                        description: 失効していないかどうか
+                      trustChainValid:
+                        type: boolean
+                        description: 信頼チェーンが有効かどうか
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                    description: 検証エラーの詳細
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                    description: 検証警告の詳細
+                  validatedAt:
+                    type: string
+                    format: date-time
+                    description: 検証実行日時
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certificates/validate-chain:
+    post:
+      summary: 証明書チェーン検証
+      description: 証明書チェーン全体の有効性を検証します
+      tags:
+        - Certificate Validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - certificateChain
+              properties:
+                certificateChain:
+                  type: array
+                  items:
+                    type: string
+                  description: 証明書チェーン（PEM形式、リーフから順番）
+                  minItems: 1
+                trustedRoots:
+                  type: array
+                  items:
+                    type: string
+                  description: 信頼するルート証明書（PEM形式）
+                checkRevocation:
+                  type: boolean
+                  description: 失効状態の確認を行うかどうか
+                  default: true
+                validationTime:
+                  type: string
+                  format: date-time
+                  description: 検証時点（指定しない場合は現在時刻）
+      responses:
+        '200':
+          description: 証明書チェーン検証結果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    description: 証明書チェーンが有効かどうか
+                  chainResults:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        level:
+                          type: integer
+                          description: チェーンレベル（0がリーフ証明書）
+                        subject:
+                          type: string
+                          description: 証明書の主体者
+                        valid:
+                          type: boolean
+                          description: この証明書が有効かどうか
+                        errors:
+                          type: array
+                          items:
+                            type: string
+                          description: 検証エラー
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                    description: チェーン全体の検証エラー
+                  validatedAt:
+                    type: string
+                    format: date-time
+                    description: 検証実行日時
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ocsp/{serialNumber}:
+    get:
+      summary: OCSP レスポンス取得
+      description: 指定されたシリアル番号の証明書のOCSPレスポンスを取得します
+      tags:
+        - Certificate Validation
+      parameters:
+        - name: serialNumber
+          in: path
+          required: true
+          description: 証明書のシリアル番号
+          schema:
+            type: string
+        - name: issuer
+          in: query
+          required: true
+          description: 発行者のハッシュ
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OCSPレスポンス
+          content:
+            application/ocsp-response:
+              schema:
+                type: string
+                format: binary
+                description: OCSPレスポンス（DER形式）
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certificates/{id}/status:
+    get:
+      summary: 証明書失効状態確認
+      description: 指定された証明書の失効状態を確認します
+      tags:
+        - Certificate Validation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 証明書のID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 証明書失効状態
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  serialNumber:
+                    type: string
+                    description: 証明書のシリアル番号
+                  status:
+                    type: string
+                    enum: [good, revoked, unknown]
+                    description: 証明書の状態
+                  revocationTime:
+                    type: string
+                    format: date-time
+                    description: 失効日時（失効済みの場合）
+                  revocationReason:
+                    type: string
+                    enum:
+                      - unspecified
+                      - keyCompromise
+                      - cACompromise
+                      - affiliationChanged
+                      - superseded
+                      - cessationOfOperation
+                      - certificateHold
+                      - removeFromCRL
+                    description: 失効理由
+                  thisUpdate:
+                    type: string
+                    format: date-time
+                    description: 情報の更新日時
+                  nextUpdate:
+                    type: string
+                    format: date-time
+                    description: 次回更新予定日時
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     ApiKeyAuth:
