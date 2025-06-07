@@ -1,0 +1,726 @@
+openapi: 3.1.0
+info:
+  title: PKI Certificate Management API
+  description: |
+    X.509証明書管理システムのためのRESTful API。
+    証明書の発行、管理、検証、およびCA（認証局）の管理機能を提供します。
+  version: 1.0.0
+  contact:
+    name: PKI Certificate Management Team
+    email: support@pki-cert-mgmt.example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.pki-cert-mgmt.example.com/v1
+    description: 本番環境
+  - url: https://staging-api.pki-cert-mgmt.example.com/v1
+    description: ステージング環境
+  - url: http://localhost:8080/v1
+    description: ローカル開発環境
+
+security:
+  - ApiKeyAuth: []
+  - OAuth2: [read, write, admin]
+
+paths:
+  /health:
+    get:
+      summary: ヘルスチェック
+      description: APIサーバーの稼働状況を確認します
+      tags:
+        - System
+      security: []
+      responses:
+        '200':
+          description: システムが正常に動作中
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /certificates:
+    get:
+      summary: 証明書一覧取得
+      description: 証明書の一覧を取得します。フィルタリング、ソート、ページネーションをサポートします。
+      tags:
+        - Certificates
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: ページサイズ
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: 証明書の状態でフィルタ
+          schema:
+            type: string
+            enum: [active, revoked, expired, pending]
+        - name: subject
+          in: query
+          description: 主体者名で部分一致検索
+          schema:
+            type: string
+        - name: issuer
+          in: query
+          description: 発行者名で部分一致検索
+          schema:
+            type: string
+        - name: validFrom
+          in: query
+          description: 有効開始日以降の証明書を検索
+          schema:
+            type: string
+            format: date
+        - name: validTo
+          in: query
+          description: 有効終了日以前の証明書を検索
+          schema:
+            type: string
+            format: date
+        - name: sort
+          in: query
+          description: ソート順
+          schema:
+            type: string
+            enum: [validFrom, validTo, createdAt, subject]
+            default: createdAt
+        - name: order
+          in: query
+          description: ソート方向
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: 証明書一覧
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginationResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Certificate'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: 証明書発行
+      description: 新しい証明書を発行します
+      tags:
+        - Certificates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CertificateRequest'
+      responses:
+        '201':
+          description: 証明書が正常に発行されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Certificate'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certificates/{id}:
+    get:
+      summary: 証明書取得
+      description: 指定されたIDの証明書を取得します
+      tags:
+        - Certificates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 証明書のID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 証明書詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Certificate'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: 証明書更新
+      description: 証明書を更新または再発行します
+      tags:
+        - Certificates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 証明書のID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CertificateRequest'
+      responses:
+        '200':
+          description: 証明書が正常に更新されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Certificate'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: 証明書失効
+      description: 証明書を失効させます
+      tags:
+        - Certificates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 証明書のID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  enum:
+                    - unspecified
+                    - keyCompromise
+                    - cACompromise
+                    - affiliationChanged
+                    - superseded
+                    - cessationOfOperation
+                    - certificateHold
+                  description: 失効理由
+                revocationDate:
+                  type: string
+                  format: date-time
+                  description: 失効日時（指定しない場合は現在時刻）
+      responses:
+        '200':
+          description: 証明書が正常に失効されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Certificate'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: APIキー認証
+    
+    OAuth2:
+      type: oauth2
+      description: OAuth2認証
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.pki-cert-mgmt.example.com/oauth/token
+          scopes:
+            read: 読み取り権限
+            write: 書き込み権限
+            admin: 管理者権限
+
+  responses:
+    UnauthorizedError:
+      description: 認証が必要です
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    ForbiddenError:
+      description: アクセス権限がありません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    NotFoundError:
+      description: リソースが見つかりません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    ValidationError:
+      description: 入力値が無効です
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    InternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: エラーコード
+          example: "INVALID_REQUEST"
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "リクエストの形式が無効です"
+        details:
+          type: array
+          description: 詳細なエラー情報
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: エラーが発生したフィールド
+              code:
+                type: string
+                description: フィールド固有のエラーコード
+              message:
+                type: string
+                description: フィールド固有のエラーメッセージ
+        timestamp:
+          type: string
+          format: date-time
+          description: エラー発生日時
+        traceId:
+          type: string
+          description: トレースID（デバッグ用）
+
+    PaginationResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: 現在のページ番号
+          example: 1
+        size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: ページサイズ
+          example: 20
+        total:
+          type: integer
+          minimum: 0
+          description: 総件数
+          example: 150
+        totalPages:
+          type: integer
+          minimum: 0
+          description: 総ページ数
+          example: 8
+
+    Certificate:
+      type: object
+      required:
+        - id
+        - subject
+        - issuer
+        - serialNumber
+        - validFrom
+        - validTo
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 証明書の一意識別子
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        subject:
+          type: string
+          description: 証明書の主体者（Distinguished Name）
+          example: "CN=example.com,OU=IT Department,O=Example Corp,L=Tokyo,ST=Tokyo,C=JP"
+        issuer:
+          type: string
+          description: 証明書の発行者（Distinguished Name）
+          example: "CN=Example CA,O=Example Corp,C=JP"
+        serialNumber:
+          type: string
+          description: 証明書のシリアル番号
+          example: "1234567890ABCDEF"
+        validFrom:
+          type: string
+          format: date-time
+          description: 証明書の有効開始日時
+        validTo:
+          type: string
+          format: date-time
+          description: 証明書の有効終了日時
+        status:
+          type: string
+          enum: [active, revoked, expired, pending]
+          description: 証明書の状態
+        keyUsage:
+          type: array
+          items:
+            type: string
+            enum: 
+              - digitalSignature
+              - nonRepudiation
+              - keyEncipherment
+              - dataEncipherment
+              - keyAgreement
+              - keyCertSign
+              - cRLSign
+          description: キー使用法
+        extendedKeyUsage:
+          type: array
+          items:
+            type: string
+            enum:
+              - serverAuth
+              - clientAuth
+              - codeSigning
+              - emailProtection
+              - timeStamping
+              - OCSPSigning
+          description: 拡張キー使用法
+        fingerprint:
+          type: string
+          description: 証明書のフィンガープリント（SHA-256）
+          example: "A1:B2:C3:D4:E5:F6:07:08:09:0A:1B:2C:3D:4E:5F:60:71:82:93:A4:B5:C6:D7:E8:F9:0A:1B:2C:3D:4E:5F:60"
+        publicKey:
+          type: string
+          description: 公開鍵（PEM形式）
+        certificate:
+          type: string
+          description: 証明書（PEM形式）
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+        revokedAt:
+          type: string
+          format: date-time
+          description: 失効日時（失効済みの場合）
+        revocationReason:
+          type: string
+          enum:
+            - unspecified
+            - keyCompromise
+            - cACompromise
+            - affiliationChanged
+            - superseded
+            - cessationOfOperation
+            - certificateHold
+            - removeFromCRL
+          description: 失効理由
+
+    CertificateRequest:
+      type: object
+      required:
+        - subject
+        - keySize
+      properties:
+        subject:
+          type: string
+          description: 証明書の主体者（Distinguished Name）
+          example: "CN=example.com,OU=IT Department,O=Example Corp,L=Tokyo,ST=Tokyo,C=JP"
+        subjectAltNames:
+          type: array
+          items:
+            type: string
+          description: サブジェクト代替名
+          example: ["example.com", "www.example.com", "api.example.com"]
+        keySize:
+          type: integer
+          enum: [2048, 3072, 4096]
+          description: 鍵長（ビット）
+          default: 2048
+        keyType:
+          type: string
+          enum: [RSA, EC]
+          description: 鍵アルゴリズム
+          default: RSA
+        curve:
+          type: string
+          enum: [P-256, P-384, P-521]
+          description: 楕円曲線（ECの場合）
+        validityDays:
+          type: integer
+          minimum: 1
+          maximum: 3650
+          description: 有効期間（日数）
+          default: 365
+        keyUsage:
+          type: array
+          items:
+            type: string
+            enum: 
+              - digitalSignature
+              - nonRepudiation
+              - keyEncipherment
+              - dataEncipherment
+              - keyAgreement
+              - keyCertSign
+              - cRLSign
+          description: キー使用法
+        extendedKeyUsage:
+          type: array
+          items:
+            type: string
+            enum:
+              - serverAuth
+              - clientAuth
+              - codeSigning
+              - emailProtection
+              - timeStamping
+              - OCSPSigning
+          description: 拡張キー使用法
+        templateId:
+          type: string
+          format: uuid
+          description: 使用する証明書テンプレートID
+
+    CertificateAuthority:
+      type: object
+      required:
+        - id
+        - subject
+        - type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: CAの一意識別子
+        subject:
+          type: string
+          description: CAの主体者（Distinguished Name）
+          example: "CN=Example Root CA,O=Example Corp,C=JP"
+        type:
+          type: string
+          enum: [root, intermediate]
+          description: CAのタイプ
+        status:
+          type: string
+          enum: [active, revoked, expired]
+          description: CAの状態
+        parentCaId:
+          type: string
+          format: uuid
+          description: 親CAのID（中間CAの場合）
+        certificate:
+          type: string
+          description: CA証明書（PEM形式）
+        crlUrl:
+          type: string
+          format: uri
+          description: CRL配布ポイントURL
+        ocspUrl:
+          type: string
+          format: uri
+          description: OCSPレスポンダーURL
+        validFrom:
+          type: string
+          format: date-time
+          description: CA証明書の有効開始日時
+        validTo:
+          type: string
+          format: date-time
+          description: CA証明書の有効終了日時
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+
+    Key:
+      type: object
+      required:
+        - id
+        - type
+        - size
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: キーの一意識別子
+        type:
+          type: string
+          enum: [RSA, EC]
+          description: キーアルゴリズム
+        size:
+          type: integer
+          description: キーサイズ（ビット）
+          example: 2048
+        curve:
+          type: string
+          enum: [P-256, P-384, P-521]
+          description: 楕円曲線（ECの場合）
+        status:
+          type: string
+          enum: [active, compromised, retired]
+          description: キーの状態
+        publicKey:
+          type: string
+          description: 公開鍵（PEM形式）
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        lastUsed:
+          type: string
+          format: date-time
+          description: 最終使用日時
+
+    Template:
+      type: object
+      required:
+        - id
+        - name
+        - keyUsage
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: テンプレートの一意識別子
+        name:
+          type: string
+          description: テンプレート名
+          example: "Web Server Certificate"
+        description:
+          type: string
+          description: テンプレートの説明
+        keyUsage:
+          type: array
+          items:
+            type: string
+            enum: 
+              - digitalSignature
+              - nonRepudiation
+              - keyEncipherment
+              - dataEncipherment
+              - keyAgreement
+              - keyCertSign
+              - cRLSign
+          description: キー使用法
+        extendedKeyUsage:
+          type: array
+          items:
+            type: string
+            enum:
+              - serverAuth
+              - clientAuth
+              - codeSigning
+              - emailProtection
+              - timeStamping
+              - OCSPSigning
+          description: 拡張キー使用法
+        validityDays:
+          type: integer
+          minimum: 1
+          maximum: 3650
+          description: デフォルト有効期間（日数）
+          default: 365
+        keySize:
+          type: integer
+          enum: [2048, 3072, 4096]
+          description: デフォルト鍵長（ビット）
+          default: 2048
+        isActive:
+          type: boolean
+          description: テンプレートが有効かどうか
+          default: true
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
